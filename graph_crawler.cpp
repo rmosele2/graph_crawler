@@ -23,6 +23,13 @@ vector<string> getNeighbors(const string& node) {
     string readBuffer;
     vector<string> neighbors;
 
+    // Encode spaces in the node name for the URL
+    string encodedNode = node;
+    size_t pos;
+    while ((pos = encodedNode.find(" ")) != string::npos) {
+        encodedNode.replace(pos, 1, "%20");
+    }
+
     if (curl) {
         string url = "http://hollywood-graph-crawler.bridgesuncc.org/neighbors/" + node;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
