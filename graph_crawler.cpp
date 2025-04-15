@@ -23,20 +23,29 @@ vector<string> getNeighbors(const string& node) {
     string readBuffer;
     vector<string> neighbors;
 
-    // Encode spaces in the node name for the URL
-    string encodedNode = node;
-    size_t pos;
-    while ((pos = encodedNode.find(" ")) != string::npos) {
-        encodedNode.replace(pos, 1, "%20");
+    // URL-encode the node (replace spaces with %20)
+    string encodedNode;
+    for (char c : node) {
+        if (c == ' ')
+            encodedNode += "%20";
+        else
+            encodedNode += c;
     }
 
     if (curl) {
-        string url = "http://hollywood-graph-crawler.bridgesuncc.org/neighbors/" + node;
+        string url = "http://hollywood-graph-crawler.bridgesuncc.org/neighbors/" + encodedNode;
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
         curl_easy_perform(curl);
+
+        // Check if the response is a valid JSON object
+        if (readBuffer.empty() || readBuffer[0] != '{') {
+            cerr << "Invalid JSON response for node: " << node << endl;
+            return neighbors; // return empty vector
+        }
+
         curl_easy_cleanup(curl);
 
         cout << "Fetching neighbors of: " << node << endl;
@@ -52,6 +61,7 @@ vector<string> getNeighbors(const string& node) {
     }
     return neighbors;
 }
+
 
 // BFS traversal that prints all nodes within a given depth
 void bfs(const string& start, int maxDepth) {
