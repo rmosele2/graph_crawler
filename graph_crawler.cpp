@@ -4,6 +4,7 @@
 #include <queue>
 #include <unordered_set>
 #include <tuple>
+#include <chrono>
 #include <curl/curl.h> // For making HTTP requests
 #include "rapidjson/document.h" // For parsing JSON data
 
@@ -30,6 +31,9 @@ vector<string> getNeighbors(const string& node) {
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
         curl_easy_perform(curl);
         curl_easy_cleanup(curl);
+
+        cout << "Fetching neighbors of: " << node << endl;
+        cout << "Response: " << readBuffer << endl;
 
         rapidjson::Document d;
         d.Parse(readBuffer.c_str());
@@ -67,7 +71,9 @@ void bfs(const string& start, int maxDepth) {
     }
 }
 
-int main(int argc, char* argv[]) {
+#include <chrono>  // Add this at the top of your file
+
+int main(int argc, char* argv[]) { 
     if (argc != 3) {
         cerr << "Usage: " << argv[0] << " <starting_node> <depth>" << endl;
         return 1;
@@ -82,8 +88,21 @@ int main(int argc, char* argv[]) {
     }
 
     curl_global_init(CURL_GLOBAL_DEFAULT);   // Initialize CURL globally
-    bfs(startingNode, depth);                // Run BFS
-    curl_global_cleanup();                   // Clean up CURL
+
+    //Start timing
+    auto startTime = chrono::high_resolution_clock::now();
+
+    bfs(startingNode, depth);
+
+    //End timing
+    auto endTime = chrono::high_resolution_clock::now();
+    chrono::duration<double> duration = endTime - startTime;
+
+    cout << "Traversal completed in " << duration.count() << " seconds." << endl;
+
+    curl_global_cleanup();                   // Cleanup CURL globally
 
     return 0;
 }
+// Compile with: g++ -o graph_crawler graph_crawler.cpp -lcurl -ljsoncpp
+// Run with: ./graph_crawler <starting_node> <depth>
